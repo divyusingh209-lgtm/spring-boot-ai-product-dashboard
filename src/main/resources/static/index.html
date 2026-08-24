@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Product Management Dashboard</title>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #aiBtn {
+            background-color: #6f42c1;
+            margin-top: 6px;
+            font-size: 13px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-delete {
+            background-color: #dc3545;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .btn-delete:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>Add New Product</h2>
+
+    <form id="productForm">
+
+        <div class="form-group">
+            <label>Product Name</label>
+
+            <input
+                    type="text"
+                    id="name"
+                    required
+                    placeholder="e.g. Wireless Headphones"
+            >
+        </div>
+
+
+        <div class="form-group">
+            <label>Category</label>
+
+            <input
+                    type="text"
+                    id="category"
+                    placeholder="e.g. Electronics"
+            >
+        </div>
+
+
+        <div class="form-group">
+            <label>Features</label>
+
+            <input
+                    type="text"
+                    id="features"
+                    placeholder="e.g. Wireless, Bluetooth"
+            >
+        </div>
+
+
+        <div class="form-group">
+            <label>Material</label>
+
+            <input
+                    type="text"
+                    id="material"
+                    placeholder="e.g. Plastic and Metal"
+            >
+        </div>
+
+
+        <button
+                type="button"
+                id="aiBtn"
+                onclick="generateAIDescription()"
+        >
+            ✨ Auto-Generate Description with AI
+        </button>
+
+
+        <div class="form-group">
+
+            <label>Description</label>
+
+            <input
+                    type="text"
+                    id="description"
+                    required
+                    placeholder="AI-generated description will appear here..."
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Price ($)</label>
+
+            <input
+                    type="number"
+                    step="0.01"
+                    id="price"
+                    required
+                    placeholder="e.g. 29.99"
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Stock Quantity</label>
+
+            <input
+                    type="number"
+                    id="stockQuantity"
+                    required
+                    placeholder="e.g. 100"
+            >
+
+        </div>
+
+
+        <button type="submit">
+            Add Product
+        </button>
+
+    </form>
+
+
+    <h2>Product Inventory</h2>
+
+
+    <table>
+
+        <thead>
+
+        <tr>
+
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Action</th>
+
+        </tr>
+
+        </thead>
+
+
+        <tbody id="productTableBody">
+
+        </tbody>
+
+    </table>
+
+</div>
+
+
+<script>
+
+    // Product API
+    const API_URL = '/api/products';
+
+
+    // Load products when page opens
+    document.addEventListener(
+        'DOMContentLoaded',
+        fetchProducts
+    );
+
+
+    // =========================
+    // FETCH ALL PRODUCTS
+    // =========================
+
+    function fetchProducts() {
+
+        fetch(API_URL)
+
+            .then(response => {
+
+                if (!response.ok) {
+                    throw new Error(
+                        'Unable to fetch products. Status: '
+                        + response.status
+                    );
+                }
+
+                return response.json();
+
+            })
+
+            .then(data => {
+
+                const tableBody =
+                    document.getElementById(
+                        'productTableBody'
+                    );
+
+                tableBody.innerHTML = '';
+
+
+                data.forEach(product => {
+
+                    const row = `
+
+                        <tr>
+
+                            <td>${product.id}</td>
+
+                            <td>${product.name}</td>
+
+                            <td>${product.description}</td>
+
+                            <td>$${product.price}</td>
+
+                            <td>${product.stockQuantity}</td>
+
+                            <td>
+
+                                <button
+                                    class="btn-delete"
+                                    onclick="deleteProduct(${product.id})"
+                                >
+
+                                    Delete
+
+                                </button>
+
+                            </td>
+
+                        </tr>
+
+                    `;
+
+                    tableBody.innerHTML += row;
+
+                });
+
+            })
+
+            .catch(error => {
+
+                console.error(
+                    'Error fetching products:',
+                    error
+                );
+
+            });
+
+    }
+
+
+    // =========================
+    // ADD PRODUCT
+    // =========================
+
+    document
+        .getElementById('productForm')
+        .addEventListener(
+            'submit',
+            function (e) {
+
+                e.preventDefault();
+
+
+                const product = {
+
+                    name:
+                        document
+                            .getElementById('name')
+                            .value,
+
+                    description:
+                        document
+                            .getElementById('description')
+                            .value,
+
+                    price:
+                        parseFloat(
+                            document
+                                .getElementById('price')
+                                .value
+                        ),
+
+                    stockQuantity:
+                        parseInt(
+                            document
+                                .getElementById('stockQuantity')
+                                .value
+                        )
+
+                };
+
+
+                console.log(
+                    'Sending product:',
+                    product
+                );
+
+
+                fetch(API_URL, {
+
+                    method: 'POST',
+
+                    headers: {
+
+                        'Content-Type':
+                            'application/json'
+
+                    },
+
+                    body:
+                        JSON.stringify(product)
+
+                })
+
+                    .then(response => {
+
+                        if (!response.ok) {
+
+                            return response
+                                .text()
+                                .then(text => {
+
+                                    throw new Error(
+                                        text ||
+                                        'Failed to add product'
+                                    );
+
+                                });
+
+                        }
+
+                        return response.json();
+
+                    })
+
+                    .then(data => {
+
+                        console.log(
+                            'Product added:',
+                            data
+                        );
+
+
+                        alert(
+                            'Product added successfully!'
+                        );
+
+
+                        // Refresh inventory
+                        fetchProducts();
+
+
+                        // Clear form
+                        document
+                            .getElementById('productForm')
+                            .reset();
+
+                    })
+
+                    .catch(error => {
+
+                        console.error(
+                            'Error adding product:',
+                            error
+                        );
+
+
+                        alert(
+                            'Error adding product: '
+                            + error.message
+                        );
+
+                    });
+
+            }
+        );
+
+
+    // =========================
+    // DELETE PRODUCT
+    // =========================
+
+    function deleteProduct(id) {
+
+        if (
+            !confirm(
+                'Are you sure you want to delete this product?'
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        fetch(
+            `${API_URL}/${id}`,
+            {
+                method: 'DELETE'
+            }
+        )
+
+            .then(response => {
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        'Failed to delete product'
+                    );
+
+                }
+
+
+                fetchProducts();
+
+            })
+
+            .catch(error => {
+
+                console.error(
+                    'Error deleting product:',
+                    error
+                );
+
+
+                alert(
+                    'Error deleting product'
+                );
+
+            });
+
+    }
+
+
+    // =========================
+    // GENERATE AI DESCRIPTION
+    // =========================
+
+    function generateAIDescription() {
+
+        const productName =
+            document
+                .getElementById('name')
+                .value
+                .trim();
+
+
+        const category =
+            document
+                .getElementById('category')
+                .value
+                .trim();
+
+
+        const features =
+            document
+                .getElementById('features')
+                .value
+                .trim();
+
+
+        const material =
+            document
+                .getElementById('material')
+                .value
+                .trim();
+
+
+        if (!productName) {
+
+            alert(
+                'Please enter a product name first!'
+            );
+
+            return;
+
+        }
+
+
+        const btn =
+            document.getElementById('aiBtn');
+
+
+        btn.innerText =
+            '⏳ Generating AI description...';
+
+
+        btn.disabled = true;
+
+
+        // Send data to AI backend
+        fetch(
+            '/api/ai/generate-description',
+            {
+
+                method: 'POST',
+
+                headers: {
+
+                    'Content-Type':
+                        'application/json'
+
+                },
+
+                body:
+                    JSON.stringify({
+
+                        productName:
+                            productName,
+
+                        category:
+                            category,
+
+                        features:
+                            features,
+
+                        material:
+                            material
+
+                    })
+
+            }
+        )
+
+            .then(response => {
+
+                if (!response.ok) {
+
+                    return response
+                        .text()
+                        .then(text => {
+
+                            throw new Error(text);
+
+                        });
+
+                }
+
+                return response.text();
+
+            })
+
+            .then(aiDescription => {
+
+                document
+                    .getElementById('description')
+                    .value =
+                    aiDescription;
+
+            })
+
+            .catch(error => {
+
+                console.error(
+                    'AI Error:',
+                    error
+                );
+
+
+                alert(
+                    'Error generating AI description: '
+                    + error.message
+                );
+
+            })
+
+            .finally(() => {
+
+                btn.innerText =
+                    '✨ Auto-Generate Description with AI';
+
+
+                btn.disabled = false;
+
+            });
+
+    }
+
+</script>
+
+</body>
+
+</html>
